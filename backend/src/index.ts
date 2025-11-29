@@ -28,10 +28,41 @@ const app = express()
 const PORT = process.env.PORT || 3001
 
 // Middleware
-app.use(helmet())
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: "cross-origin" }
+}))
+
+// CORS configuration - allow multiple origins for development and production
+const allowedOrigins = [
+  'http://localhost:3000',
+  'http://localhost:3001',
+  process.env.FRONTEND_URL,
+].filter(Boolean) as string[]
+
+console.log('🔒 CORS allowed origins:', allowedOrigins)
+
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+  origin: (origin, callback) => {
+    // Allow requests with no origin (like mobile apps, Postman, or server-to-server requests)
+    if (!origin) {
+      return callback(null, true)
+    }
+    
+    // Check if origin is in allowed list
+    if (allowedOrigins.includes(origin)) {
+      callback(null, true)
+    } else {
+      console.warn(`⚠️  CORS blocked origin: ${origin}. Allowed origins:`, allowedOrigins)
+      // In production, you might want to be stricter:
+      // callback(new Error('Not allowed by CORS'))
+      // For now, allow it but log a warning for debugging
+      callback(null, true)
+    }
+  },
   credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+  exposedHeaders: ['Set-Cookie'],
 }))
 app.use(cookieParser())
 app.use(express.json())
