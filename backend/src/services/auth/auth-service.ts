@@ -102,11 +102,18 @@ export class AuthService {
 
     if (authError) {
       // Check for specific error codes
-      if (authError.message?.toLowerCase().includes('email_not_confirmed') || 
-          authError.message?.toLowerCase().includes('email not confirmed')) {
-        throw new Error('Please confirm your email address before logging in. Check your inbox for a confirmation link.')
+      const errorMsg = authError.message || 'Invalid email or password'
+      const error: any = new Error(errorMsg)
+      error.statusCode = 401
+      error.code = 'INVALID_CREDENTIALS'
+      
+      if (errorMsg.toLowerCase().includes('email_not_confirmed') || 
+          errorMsg.toLowerCase().includes('email not confirmed')) {
+        error.message = 'Please confirm your email address before logging in. Check your inbox for a confirmation link.'
+        error.code = 'EMAIL_NOT_CONFIRMED'
       }
-      throw new Error(authError.message || 'Invalid email or password')
+      
+      throw error
     }
 
     if (!authData.user || !authData.session) {
@@ -122,7 +129,10 @@ export class AuthService {
       .single()
 
     if (userError || !userData) {
-      throw new Error('User not found')
+      const error: any = new Error('User not found')
+      error.statusCode = 404
+      error.code = 'USER_NOT_FOUND'
+      throw error
     }
 
     return {
