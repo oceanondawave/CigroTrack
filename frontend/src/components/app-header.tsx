@@ -2,7 +2,7 @@
 
 import { cn } from "@/lib/utils"
 
-import { Bell, Search, Settings } from "lucide-react"
+import { Search, Settings } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import {
@@ -14,11 +14,11 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Badge } from "@/components/ui/badge"
-import { mockUser, mockNotifications } from "@/lib/mock-data"
+import { NotificationsDropdown } from "@/features/notifications/components/notifications-dropdown"
+import { useAuthContext } from "@/features/auth/contexts/auth-context"
 
 export function AppHeader() {
-  const unreadCount = mockNotifications.filter((n) => !n.read).length
+  const { user, logout } = useAuthContext()
 
   return (
     <header className="sticky top-0 z-50 w-full backdrop-blur-md bg-popover/95 border-b border-border/60 shadow-sm">
@@ -38,40 +38,7 @@ export function AppHeader() {
         {/* Right side actions */}
         <div className="flex items-center gap-2">
           {/* Notifications */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="relative hover:bg-accent/50">
-                <Bell className="h-4 w-4" />
-                {unreadCount > 0 && (
-                  <Badge
-                    variant="destructive"
-                    className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs shadow-lg"
-                  >
-                    {unreadCount}
-                  </Badge>
-                )}
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-80">
-              <DropdownMenuLabel>Notifications</DropdownMenuLabel>
-              <DropdownMenuSeparator className="bg-border" />
-              {mockNotifications.map((notification) => (
-                <DropdownMenuItem
-                  key={notification.id}
-                  className={cn("hover:bg-accent/50", notification.read && "opacity-50")}
-                >
-                  <div className="flex flex-col gap-1">
-                    <p className="text-sm">{notification.title}</p>
-                    <p className="text-xs text-muted-foreground">{notification.time}</p>
-                  </div>
-                </DropdownMenuItem>
-              ))}
-              <DropdownMenuSeparator className="bg-border" />
-              <DropdownMenuItem className="text-center justify-center text-primary hover:bg-accent/50">
-                View all notifications
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <NotificationsDropdown />
 
           {/* Settings */}
           <Button variant="ghost" size="icon" className="hover:bg-accent/50">
@@ -83,16 +50,18 @@ export function AppHeader() {
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" className="relative h-8 w-8 rounded-full hover:bg-accent/50">
                 <Avatar className="h-8 w-8">
-                  <AvatarImage src={mockUser.avatar || "/placeholder.svg"} alt={mockUser.name} />
-                  <AvatarFallback className="bg-primary/10 backdrop-blur-sm">{mockUser.name[0]}</AvatarFallback>
+                  <AvatarImage src={user?.avatar} alt={user?.name || "User"} />
+                  <AvatarFallback className="bg-primary/10 backdrop-blur-sm">
+                    {user?.name?.[0] || "U"}
+                  </AvatarFallback>
                 </Avatar>
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuLabel>
                 <div className="flex flex-col gap-1">
-                  <p className="text-sm font-medium">{mockUser.name}</p>
-                  <p className="text-xs text-muted-foreground">{mockUser.email}</p>
+                  <p className="text-sm font-medium">{user?.name || "User"}</p>
+                  <p className="text-xs text-muted-foreground">{user?.email || ""}</p>
                 </div>
               </DropdownMenuLabel>
               <DropdownMenuSeparator className="bg-border" />
@@ -100,7 +69,12 @@ export function AppHeader() {
               <DropdownMenuItem className="hover:bg-accent/50">Settings</DropdownMenuItem>
               <DropdownMenuItem className="hover:bg-accent/50">Switch Team</DropdownMenuItem>
               <DropdownMenuSeparator className="bg-border" />
-              <DropdownMenuItem className="text-destructive hover:bg-accent/50">Log out</DropdownMenuItem>
+              <DropdownMenuItem 
+                className="text-destructive hover:bg-accent/50"
+                onClick={() => logout()}
+              >
+                Log out
+              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>

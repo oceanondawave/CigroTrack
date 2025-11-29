@@ -1,31 +1,24 @@
 "use client"
 
-import { useState } from "react"
 import Link from "next/link"
 import { AppLayout } from "@/components/app-layout"
+import { ProtectedRoute } from "@/components/protected-route"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Badge } from "@/components/ui/badge"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { mockIssues } from "@/lib/mock-data"
-import { Search, Filter, Plus, SlidersHorizontal } from "lucide-react"
+import { CheckSquare, Plus, FolderKanban } from "lucide-react"
+import { useProjects } from "@/features/projects/hooks/use-projects"
+import { Loader2 } from "lucide-react"
+
+// Note: Issues are project-specific. This page shows a list of projects to select from.
+// To view issues, select a project and use the project detail page.
 
 export default function IssuesPage() {
-  const [searchQuery, setSearchQuery] = useState("")
-  const [statusFilter, setStatusFilter] = useState("all")
-  const [priorityFilter, setPriorityFilter] = useState("all")
-
-  const filteredIssues = mockIssues.filter((issue) => {
-    const matchesSearch = issue.title.toLowerCase().includes(searchQuery.toLowerCase())
-    const matchesStatus = statusFilter === "all" || issue.status === statusFilter
-    const matchesPriority = priorityFilter === "all" || issue.priority === priorityFilter
-    return matchesSearch && matchesStatus && matchesPriority
-  })
+  const { projects, loading: projectsLoading } = useProjects()
 
   return (
-    <AppLayout>
-      <div className="space-y-6">
+    <ProtectedRoute>
+      <AppLayout>
+        <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold tracking-tight">Issues</h1>
@@ -39,93 +32,43 @@ export default function IssuesPage() {
           </Link>
         </div>
 
-        {/* Filters */}
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base font-medium flex items-center gap-2">
-              <Filter className="h-4 w-4" />
-              Filters
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex flex-col sm:flex-row gap-4">
-              <div className="flex-1 relative">
-                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Search issues..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-8"
-                />
-              </div>
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="w-full sm:w-[180px]">
-                  <SelectValue placeholder="Status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Status</SelectItem>
-                  <SelectItem value="Backlog">Backlog</SelectItem>
-                  <SelectItem value="In Progress">In Progress</SelectItem>
-                  <SelectItem value="Done">Done</SelectItem>
-                </SelectContent>
-              </Select>
-              <Select value={priorityFilter} onValueChange={setPriorityFilter}>
-                <SelectTrigger className="w-full sm:w-[180px]">
-                  <SelectValue placeholder="Priority" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Priority</SelectItem>
-                  <SelectItem value="high">High</SelectItem>
-                  <SelectItem value="medium">Medium</SelectItem>
-                  <SelectItem value="low">Low</SelectItem>
-                </SelectContent>
-              </Select>
-              <Button variant="outline" size="icon">
-                <SlidersHorizontal className="h-4 w-4" />
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
 
-        {/* Issues List */}
+        {/* Project Selection */}
         <Card>
           <CardContent className="pt-6">
-            {filteredIssues.length === 0 ? (
+            {projectsLoading ? (
+              <div className="flex items-center justify-center py-12">
+                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+              </div>
+            ) : projects.length === 0 ? (
               <div className="text-center py-12">
-                <p className="text-muted-foreground">No issues found</p>
+                <FolderKanban className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                <p className="text-muted-foreground mb-2">No projects found</p>
+                <p className="text-sm text-muted-foreground">Create a project to start tracking issues</p>
               </div>
             ) : (
-              <div className="space-y-3">
-                {filteredIssues.map((issue) => (
-                  <Link key={issue.id} href={`/issues/${issue.id}`}>
-                    <div className="flex items-center gap-4 p-4 rounded-lg border border-border hover:bg-muted/50 transition-colors cursor-pointer">
-                      <div
-                        className={`h-2 w-2 rounded-full flex-shrink-0 ${
-                          issue.priority === "high"
-                            ? "bg-red-500"
-                            : issue.priority === "medium"
-                              ? "bg-yellow-500"
-                              : "bg-green-500"
-                        }`}
-                      />
-                      <div className="flex-1 min-w-0">
-                        <p className="font-medium text-sm truncate">{issue.title}</p>
-                        <div className="flex items-center gap-2 mt-1.5 flex-wrap">
-                          <Badge variant="secondary" className="text-xs">
-                            {issue.status}
-                          </Badge>
-                          {issue.labels.map((label) => (
-                            <Badge key={label} variant="outline" className="text-xs">
-                              {label}
-                            </Badge>
-                          ))}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {projects.filter(p => p.status === 'active').map((project) => (
+                  <Link key={project.id} href={`/projects/${project.id}`}>
+                    <Card className="hover:border-primary transition-colors cursor-pointer">
+                      <CardContent className="pt-6">
+                        <div className="space-y-2">
+                          <div className="flex items-center gap-2">
+                            <FolderKanban className="h-5 w-5 text-muted-foreground" />
+                            <h3 className="font-medium">{project.name}</h3>
+                          </div>
+                          {project.description && (
+                            <p className="text-sm text-muted-foreground line-clamp-2">
+                              {project.description}
+                            </p>
+                          )}
+                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                            <CheckSquare className="h-4 w-4" />
+                            <span>{project.issueCount || 0} issues</span>
+                          </div>
                         </div>
-                      </div>
-                      <div className="hidden md:flex items-center gap-4 text-sm text-muted-foreground">
-                        <span>{issue.assignee}</span>
-                        <span>{issue.dueDate}</span>
-                      </div>
-                    </div>
+                      </CardContent>
+                    </Card>
                   </Link>
                 ))}
               </div>
@@ -133,6 +76,7 @@ export default function IssuesPage() {
           </CardContent>
         </Card>
       </div>
-    </AppLayout>
+      </AppLayout>
+    </ProtectedRoute>
   )
 }

@@ -4,6 +4,7 @@ import { Geist, Geist_Mono } from "next/font/google"
 import "./globals.css"
 import { ThemeProvider } from "@/components/theme-provider"
 import { GradientAnimator } from "@/components/gradient-animator"
+import { AuthProvider } from "@/features/auth/contexts/auth-context"
 
 const geist = Geist({
   subsets: ["latin"],
@@ -79,7 +80,9 @@ export default function RootLayout({
         />
         <GradientAnimator />
         <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false} disableTransitionOnChange>
-          {children}
+          <AuthProvider>
+            {children}
+          </AuthProvider>
         </ThemeProvider>
       </body>
     </html>

@@ -5,18 +5,20 @@ import type React from "react"
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { AppLayout } from "@/components/app-layout"
+import { ProtectedRoute } from "@/components/protected-route"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { mockProjects } from "@/lib/mock-data"
+import { useProjects } from "@/features/projects/hooks/use-projects"
 import { ArrowLeft } from "lucide-react"
 import Link from "next/link"
 
 export default function NewIssuePage() {
   const router = useRouter()
+  const { projects, loading: projectsLoading } = useProjects()
   const [title, setTitle] = useState("")
   const [description, setDescription] = useState("")
   const [projectId, setProjectId] = useState("")
@@ -33,7 +35,8 @@ export default function NewIssuePage() {
   }
 
   return (
-    <AppLayout>
+    <ProtectedRoute>
+      <AppLayout>
       <div className="max-w-3xl space-y-6">
         <Link href="/issues">
           <Button variant="ghost" size="sm">
@@ -72,11 +75,17 @@ export default function NewIssuePage() {
                     <SelectValue placeholder="Select a project" />
                   </SelectTrigger>
                   <SelectContent>
-                    {mockProjects.map((project) => (
-                      <SelectItem key={project.id} value={project.id}>
-                        {project.name}
-                      </SelectItem>
-                    ))}
+                    {projectsLoading ? (
+                      <SelectItem value="" disabled>Loading projects...</SelectItem>
+                    ) : projects.length === 0 ? (
+                      <SelectItem value="" disabled>No projects available</SelectItem>
+                    ) : (
+                      projects.filter(p => p.status === 'active').map((project) => (
+                        <SelectItem key={project.id} value={project.id}>
+                          {project.name}
+                        </SelectItem>
+                      ))
+                    )}
                   </SelectContent>
                 </Select>
               </div>
@@ -121,6 +130,7 @@ export default function NewIssuePage() {
           </CardContent>
         </Card>
       </div>
-    </AppLayout>
+      </AppLayout>
+    </ProtectedRoute>
   )
 }

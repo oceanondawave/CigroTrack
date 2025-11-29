@@ -18,9 +18,10 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Plus } from "lucide-react"
-import { mockTeams } from "@/lib/mock-data"
+import { useTeams } from "@/features/teams/hooks/use-teams"
 
 export function CreateProjectDialog() {
+  const { teams, loading: teamsLoading } = useTeams()
   const [open, setOpen] = useState(false)
   const [name, setName] = useState("")
   const [description, setDescription] = useState("")
@@ -72,11 +73,17 @@ export function CreateProjectDialog() {
                   <SelectValue placeholder="Select a team" />
                 </SelectTrigger>
                 <SelectContent>
-                  {mockTeams.map((team) => (
-                    <SelectItem key={team.id} value={team.id}>
-                      {team.name}
-                    </SelectItem>
-                  ))}
+                  {teamsLoading ? (
+                    <SelectItem value="" disabled>Loading teams...</SelectItem>
+                  ) : teams.length === 0 ? (
+                    <SelectItem value="" disabled>No teams available. Create a team first.</SelectItem>
+                  ) : (
+                    teams.map((team) => (
+                      <SelectItem key={team.id} value={team.id}>
+                        {team.name}
+                      </SelectItem>
+                    ))
+                  )}
                 </SelectContent>
               </Select>
             </div>

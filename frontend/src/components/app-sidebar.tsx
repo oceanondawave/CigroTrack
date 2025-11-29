@@ -13,7 +13,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { mockTeams } from "@/lib/mock-data"
+import { useTeams } from "@/features/teams/hooks/use-teams"
+import { CreateTeamDialog } from "@/features/teams/components/create-team-dialog"
 
 const navigation = [
   { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
@@ -26,7 +27,8 @@ const navigation = [
 
 export function AppSidebar() {
   const pathname = usePathname()
-  const currentTeam = mockTeams[0]
+  const { teams, loading } = useTeams()
+  const currentTeam = teams[0]
 
   return (
     <aside className="fixed inset-y-0 left-0 z-40 w-64 backdrop-blur-md bg-popover/95 border-r border-border/60">
@@ -35,12 +37,12 @@ export function AppSidebar() {
         <div className="flex h-14 items-center px-4">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="w-full justify-between px-2 font-semibold hover:bg-accent/50">
+              <Button variant="ghost" className="w-full justify-between px-2 font-semibold hover:bg-accent/50" disabled={loading || !currentTeam}>
                 <div className="flex items-center gap-2">
                   <div className="h-6 w-6 rounded bg-primary/10 backdrop-blur-sm flex items-center justify-center text-foreground text-xs font-bold">
-                    {currentTeam.name[0]}
+                    {currentTeam?.name?.[0] || "T"}
                   </div>
-                  <span className="text-sm">{currentTeam.name}</span>
+                  <span className="text-sm">{currentTeam?.name || "No Team"}</span>
                 </div>
                 <ChevronDown className="h-4 w-4 opacity-50" />
               </Button>
@@ -48,21 +50,26 @@ export function AppSidebar() {
             <DropdownMenuContent align="start" className="w-56">
               <DropdownMenuLabel>Teams</DropdownMenuLabel>
               <DropdownMenuSeparator className="bg-border" />
-              {mockTeams.map((team) => (
-                <DropdownMenuItem key={team.id} className="hover:bg-accent/50">
-                  <div className="flex items-center gap-2">
-                    <div className="h-5 w-5 rounded bg-primary/10 backdrop-blur-sm flex items-center justify-center text-xs font-bold">
-                      {team.name[0]}
-                    </div>
-                    <span>{team.name}</span>
-                  </div>
-                </DropdownMenuItem>
-              ))}
+              {loading ? (
+                <DropdownMenuItem disabled>Loading teams...</DropdownMenuItem>
+              ) : teams.length === 0 ? (
+                <DropdownMenuItem disabled>No teams</DropdownMenuItem>
+              ) : (
+                teams.map((team) => (
+                  <DropdownMenuItem key={team.id} className="hover:bg-accent/50" asChild>
+                    <Link href={`/teams/${team.id}`}>
+                      <div className="flex items-center gap-2">
+                        <div className="h-5 w-5 rounded bg-primary/10 backdrop-blur-sm flex items-center justify-center text-xs font-bold">
+                          {team.name[0]}
+                        </div>
+                        <span>{team.name}</span>
+                      </div>
+                    </Link>
+                  </DropdownMenuItem>
+                ))
+              )}
               <DropdownMenuSeparator className="bg-border" />
-              <DropdownMenuItem className="hover:bg-accent/50">
-                <Plus className="h-4 w-4 mr-2" />
-                Create Team
-              </DropdownMenuItem>
+              <CreateTeamDialog />
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
